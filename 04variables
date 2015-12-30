@@ -1,0 +1,113 @@
+(defun foo ()
+  (let ((x 1))
+    (print x)
+    (symbol-value 'x)))
+  => foo
+(foo)  => ; Error
+(defun bar (x)
+  (print x)
+  (symbol-value 'x))
+  => bar
+(bar 1) => ; Error
+(setq x 1)        => 1
+(symbol-value 'x) => 1
+
+(defun foo ()
+  (let ((x 1))
+    (print x)
+    (let ((x 0))
+      (print x))
+    (print x)))
+  => foo
+(foo) => 1
+
+(defun bar (x)
+  (let ((y 2))
+    (let ((z 3))
+      (format t "~%x=~S, y=~S, z=~S" x y z))))
+  => bar
+(bar 1)  => nil
+
+(setq x 'outside)  => outside
+(let ((x 'inside)
+      (y x))
+  (list x y))
+  => (inside outside)
+(let ((y x)
+      (x 'inside))
+  (list x y))
+  => (inside outside)
+(let* ((x 'inside)
+       (y x))
+  (list x y))
+  => (inside inside)
+
+(defun static-function (n)
+  (1+ n))
+  => static-function
+(static-function 4)        => 5
+(defun dynamic-function (n)
+  (ambiguous-function))
+  ;=> dynamic-function
+(defun ambiguous-function ()
+  (1+ n))
+  => ambiguous-function
+(dynamic-function 4)   => ; Error
+
+(defun dynamic-function (n)
+  (declare (special n))
+  (ambiguous-function))
+  => dynamic-function
+(dynamic-function 4)  => 5
+
+(defun interest (balance)
+  (* balance x))
+  => interest
+(defun newbalance (x)
+  (+ x (interest x)))
+  => newbalance
+(setq x 0.1)            => 0.1
+(newbalance 100.0)      => 110.0
+(proclaim '(special x)) => t
+(newbalance 100.0)      => 10100.0
+
+(defun make-a-global-symbol (name pkg)
+  (let ((x (intern name pkg)))
+    (proclaim `(special ,x))
+    (export x pkg)
+    x))
+  => make-a-global-symbol
+(make-a-global-symbol "spec-var" :cl-user)  => spec-var
+
+(defvar *val1*)         => *val1*
+(defvar *val2* 2)       => *val2*
+*val1*                     ; Error
+*val2*                  => 2
+(setq *val1* 1)         => 1
+(setq *val2* 'two)      => two
+*val1*                  => 1
+*val2*                  => two
+(defvar *val2* 2)       => *val2*
+*val2*                  => two
+(setq *val2* 2)         => 2
+*val2*                  => 2
+
+(defparameter *val3* 3) => *val3*
+*val3*                  => 3
+(defparameter *val3* 'three) => *val3*
+*val3*                       => three
+(setq *val3* 3)              => 3
+*val3*                       => 3
+
+(defconstant +val4+ 4)       => +val4+
+(constantp '+val4+)          => t
+(setq +val4+ 'four)          => ; Error
+
+(defun foo ()
+  (let ((*package* *package*))
+    (setq *package* (make-package :my-package))
+    (intern "foo")))
+=> foo
+*package*    => #<The common-lisp-user package>
+(foo)        => my-package::foo, nil
+*package*    => #<The common-lisp-user package>
